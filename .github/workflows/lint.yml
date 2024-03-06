@@ -1,0 +1,32 @@
+name: Lint Java Code
+
+# Trigger the workflow on push and pull request events
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # Use a Maven cache to speed up subsequent builds
+      - uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # Use a Maven action to install dependencies and execute the linter job
+      - name: Install dependencies and run linter
+        uses: maven/maven-action@v3
+        with:
+          goals: clean compile verify:checkstyle
+
+      # Optionally fail the job if the linter job finds issues
+      - name: Check for lint errors
+        run: mvn -B checkstyle:checkstyle -fail
